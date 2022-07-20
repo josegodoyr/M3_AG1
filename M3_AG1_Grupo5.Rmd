@@ -1,6 +1,6 @@
 ---
 title: "Penetración y crecimiento de Facebook"
-author: "Bryan Casanova"
+author: "Bryan Casanova & Jose Godoy"
 date: "20-07-2022"
 output:
   html_document:
