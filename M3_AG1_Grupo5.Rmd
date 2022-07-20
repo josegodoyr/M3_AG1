@@ -1,0 +1,116 @@
+---
+title: "Penetración y crecimiento de Facebook"
+author: "Bryan Casanova"
+date: "20-07-2022"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Carga de datos y librerías
+
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(mice))
+suppressPackageStartupMessages(library(stargazer))
+suppressPackageStartupMessages(library(scales))
+
+datos <- read.csv("D:/Master/fb_long.csv", sep = ";")
+datos
+```
+# 1. Calcular porcentaje de usuarios de Facebook sobre el total de población
+
+```{r}
+datos <- datos %>% 
+  mutate(Internet_por_num = as.numeric(str_replace_all(string = str_trim(Internet_por_num), pattern = ",", replacement = "\\.")),
+         Facebook_por_num = 100*Facebook_num/poblacion_num)
+datos %>% summary()
+```
+
+Se presenta el summary de todas las variables en donde podemos ver que existe un valor faltante o NA en Internet_por_num, mientras que el resto de las variables presenta todos sus registros. Por otra parte, se observa que Internet_por_num y Facebook_por_num están en escala de porcentajes. 
+
+# 2. Búsqueda de outliers
+
+```{r}
+datos %>% ggplot(aes(x = Facebook_por_num)) + 
+  geom_boxplot(fill = "blue", alpha = 0.4) + 
+  labs(x = "Porcentaje de usuarios de Facebook", 
+      title = "Boxplot de porcentaje de usuarios de Facebook") + 
+  scale_x_continuous(labels = scales::label_percent(scale = 1)) +
+  theme_bw() +
+  theme(axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+```
+Al visualizar el boxplot del porcentaje de usuarios de facebook en un país no se observan outliers, sin embargo, en análisis anteriores hemos visto que los datos de 2010 y 2018 presentan distintas distribuciones, lo que puede ocultar outliers o paises con un comportamiento distinto en comparación al resto para un mismo año:
+
+```{r}
+datos %>% ggplot(aes(x = Facebook_por_num)) + 
+  geom_boxplot(fill = "blue", alpha = 0.4) + 
+  facet_wrap(~ anyo) + 
+  labs(x = "Porcentaje de usuarios de Facebook", 
+      title = "Boxplot de porcentaje de usuarios de Facebook según año") + 
+  scale_x_continuous(labels = scales::label_percent(scale = 1)) +
+  theme_bw() +
+  theme(axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+```
+Al realizar el análisis por año vemos que en el año 2010 se presenta un outlier por un valor inusualmente alto en comparación a la distribución del resto de los datos, mientras que en el año 2018 esta situación se invierte ya que se encuentran varios outliers pero esta vez por valores inusualmente bajos.
+
+# Ajuste de modelos
+
+```{r}
+rownames(datos) <- paste(datos$pais_r, datos$anyo, sep = "_")
+model2010 <- lm(Facebook_por_num ~ Internet_por_num, data = datos %>% filter(anyo == 2010))
+model2018 <- lm(Facebook_por_num ~ Internet_por_num, data = datos %>% filter(anyo == 2018))
+plot(model2010, 1)
+```
+
+Según este gráfico en el año 2010 se identifican tres países outliers: Corea del sur, Islandia, Japón.
+
+```{r}
+plot(model2018, 1)
+```
+
+Por otra parte, según este método en el año 2018 se observan otros tres países: China, Rusia y Ucrania.
+
+En el caso de los outliers del 2010, Islandia es el único outlier con un residuo positivo, lo que quiere decir que el modelo subestimó el valor, lo que se puede explicar dado que este país [tiene un acceso y uso de internet muy alto](https://icelandmag.is/article/facebook-nation-93-icelanders-use-facebook-a-regular-basis). Por su parte, [Japón ha tenido un uso proporcionalmente bajo de Facebook](https://www.humblebunny.com/japans-top-social-media-networks/#facebook-japan) debido a una mala reacción a sus políticas de privacidad. Finalmente, en Corea del sur [hasta el año 2012 había otra red social oriental que tenía mayor cantidad de usuarios que Facebook](https://www.linkfluence.com/blog/the-unique-case-of-korean-social-media). Por otra parte, en el caso del año 2018, tanto China como Rusia [tienen historial de bloqueo a esta red social](https://en.wikipedia.org/wiki/Censorship_of_Facebook), mientras que Ucrania [solo un 30% de la poblacion estaba registrada en Facebook](https://napoleoncat.com/stats/facebook-users-in-ukraine/2018/12/). 
+En resumen, las razones por las cuales los países tienen un uso particularmente alto o bajo de Facebook se deben principalmente a razones culturales o políticas.
+
+# D Cook
+
+```{r}
+plot(model2010, 4)
+```
+
+```{r}
+plot(model2018, 4)
+```
+
+Según la distnacia de Cook ninguno de los outliers observados, tanto en el año 2010 como en el año 2018, impactan de manera significativa sobre los coeficientes de las regresiones y por lo tanto, no deben ser eliminados.
+
+# Comparación con rlm
+
+```{r}
+rlm_model2010 <- MASS::rlm(Facebook_por_num ~ Internet_por_num, data = datos %>% filter(anyo == 2010))
+rlm_model2018 <- MASS::rlm(Facebook_por_num ~ Internet_por_num, data = datos %>% filter(anyo == 2018))
+stargazer(model2010, model2018, rlm_model2010, rlm_model2018, type = "text")
+```
+
+Se identifica una ligera variacion en los coeficientes, lo cual era esperable dado que los outliers no impactan significativa a los coeficientes según el valor de la distancia de Cook.
+
+# Imputar valor faltante
+
+```{r}
+imp <- mice(datos %>% select(Internet_por_num, Facebook_por_num), seed = 1, print = F)
+fit <- with(imp, lm(Internet_por_num ~ Facebook_por_num))
+est <- pool(fit)
+pooled_lm = fit$analyses[[1]]
+pooled_lm$coefficients = summary(est)$estimate
+predict(pooled_lm, newdata = datos %>% filter(is.na(Internet_por_num)))
+```
+
+Utilizando la libreria mice, se estima que para el año 2010 un 56.65% de la población de Taiwan tenía acceso a internet, en base a su porcentaje de usuarios que usaba Facebook en ese año.
+
+En el caso de aplicar Bootstrap para imputar valores faltantes se tiene la ventaja de aumentar la robustez de la estimación ya que esta se realiza a partir de diferentes submuestras de datos y luego se calcula un estadístico como media o mediana para el caso de variables cuantitativas.
