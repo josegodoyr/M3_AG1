@@ -23,16 +23,16 @@ datos
 ```{r}
 datos <- datos %>% 
   mutate(Internet_por_num = as.numeric(str_replace_all(string = str_trim(Internet_por_num), pattern = ",", replacement = "\\.")),
-         Facebook_por_num = 100*Facebook_num/poblacion_num)
+         Facebook_por_Internet = 100*Facebook_num/(poblacion_num*Internet_por_num/100))
 datos %>% summary()
 ```
 
-Se presenta el summary de todas las variables en donde podemos ver que existe un valor faltante o NA en Internet_por_num, mientras que el resto de las variables presenta todos sus registros. Por otra parte, se observa que Internet_por_num y Facebook_por_num están en escala de porcentajes. 
+Se presenta el summary de todas las variables en donde podemos ver que existe un valor faltante o NA en Internet_por_num y por consecuencia, también en Facebook_por_Internet, mientras que el resto de las variables presenta todos sus registros. Por otra parte, se observa que Internet_por_num y Facebook_por_Internet están en escala de porcentajes. Esta última variable presenta valores superiores al 100%, lo que quiere decir que hay más usuarios de Facebook que personas con acceso a internet, lo que puede a múltiples personas que tienen más de una cuenta, o personas que utilizan internet públicos o prestados para poder conectarse a la red.
 
 # 2. Búsqueda de outliers
 
 ```{r}
-datos %>% ggplot(aes(x = Facebook_por_num)) + 
+datos %>% ggplot(aes(x = Facebook_por_Internet)) + 
   geom_boxplot(fill = "blue", alpha = 0.4) + 
   labs(x = "Porcentaje de usuarios de Facebook", 
       title = "Boxplot de porcentaje de usuarios de Facebook") + 
@@ -45,7 +45,7 @@ datos %>% ggplot(aes(x = Facebook_por_num)) +
 Al visualizar el boxplot del porcentaje de usuarios de facebook en un país no se observan outliers, sin embargo, en análisis anteriores hemos visto que los datos de 2010 y 2018 presentan distintas distribuciones, lo que puede ocultar outliers o paises con un comportamiento distinto en comparación al resto para un mismo año:
 
 ```{r}
-datos %>% ggplot(aes(x = Facebook_por_num)) + 
+datos %>% ggplot(aes(x = Facebook_por_Internet)) + 
   geom_boxplot(fill = "blue", alpha = 0.4) + 
   facet_wrap(~ anyo) + 
   labs(x = "Porcentaje de usuarios de Facebook", 
@@ -56,7 +56,7 @@ datos %>% ggplot(aes(x = Facebook_por_num)) +
         axis.text.y = element_blank(),
         plot.title = element_text(hjust = 0.5))
 ```
-Al realizar el análisis por año vemos que en el año 2010 se presenta un outlier por un valor inusualmente alto en comparación a la distribución del resto de los datos, mientras que en el año 2018 esta situación se invierte ya que se encuentran varios outliers pero esta vez por valores inusualmente bajos.
+Al realizar el análisis por año vemos que en el año 2010 no se presentan outliers, mientras que en el año 2018  se encuentran varios outliers por valores inusualmente bajos.
 
 # Ajuste de modelos
 
