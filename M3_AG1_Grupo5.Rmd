@@ -42,6 +42,7 @@ datos %>% ggplot(aes(x = Facebook_por_Internet)) +
         axis.text.y = element_blank(),
         plot.title = element_text(hjust = 0.5))
 ```
+
 Al visualizar el boxplot del porcentaje de usuarios de facebook en un país no se observan outliers, sin embargo, en análisis anteriores hemos visto que los datos de 2010 y 2018 presentan distintas distribuciones, lo que puede ocultar outliers o paises con un comportamiento distinto en comparación al resto para un mismo año:
 
 ```{r}
@@ -56,11 +57,13 @@ datos %>% ggplot(aes(x = Facebook_por_Internet)) +
         axis.text.y = element_blank(),
         plot.title = element_text(hjust = 0.5))
 ```
+
 Al realizar el análisis por año vemos que en el año 2010 no se presentan outliers, mientras que en el año 2018  se encuentran varios outliers por valores inusualmente bajos.
 
 # Ajuste de modelos
 
 ```{r}
+datos <- datos %>% mutate(Facebook_por_num = 100*Facebook_num/poblacion_num)
 rownames(datos) <- paste(datos$pais_r, datos$anyo, sep = "_")
 model2010 <- lm(Facebook_por_num ~ Internet_por_num, data = datos %>% filter(anyo == 2010))
 model2018 <- lm(Facebook_por_num ~ Internet_por_num, data = datos %>% filter(anyo == 2018))
