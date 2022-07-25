@@ -27,7 +27,7 @@ datos <- datos %>%
 datos %>% summary()
 ```
 
-Se presenta el summary de todas las variables en donde podemos ver que existe un valor faltante o NA en Internet_por_num y por consecuencia, también en Facebook_por_Internet, mientras que el resto de las variables presenta todos sus registros. Por otra parte, se observa que Internet_por_num y Facebook_por_Internet están en escala de porcentajes. Esta última variable presenta valores superiores al 100%, lo que quiere decir que hay más usuarios de Facebook que personas con acceso a internet, lo que puede a múltiples personas que tienen más de una cuenta, o personas que utilizan internet públicos o prestados para poder conectarse a la red.
+Se presenta el summary de todas las variables en donde podemos ver que existe un valor faltante o NA en Internet_por_num y por consecuencia, también en Facebook_por_Internet, mientras que el resto de las variables presentan todos sus registros. Por otra parte, se observa que Internet_por_num y Facebook_por_Internet están en escala de porcentajes. Esta última variable presenta valores superiores al 100%, lo que quiere decir que hay más usuarios de Facebook que personas con acceso a internet, lo que puede a múltiples personas que tienen más de una cuenta, o personas que utilizan internet públicos o prestados para poder conectarse a la red social.
 
 # 2. Búsqueda de outliers
 
@@ -58,7 +58,7 @@ datos %>% ggplot(aes(x = Facebook_por_Internet)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-Al realizar el análisis por año vemos que en el año 2010 no se presentan outliers, mientras que en el año 2018  se encuentran varios outliers por valores inusualmente bajos.
+Al realizar el análisis por año vemos que en el año 2010 no se presentan outliers, mientras que en el año 2018 se encuentran varios outliers por valores inusualmente bajos, todos con un porcentaje de usuarios menor al 25%.
 
 # Ajuste de modelos
 
@@ -85,13 +85,15 @@ En resumen, las razones por las cuales los países tienen un uso particularmente
 
 ```{r}
 plot(model2010, 4)
+plot(model2010, 5)
 ```
 
 ```{r}
 plot(model2018, 4)
+plot(model2018, 5)
 ```
 
-Según la distnacia de Cook ninguno de los outliers observados, tanto en el año 2010 como en el año 2018, impactan de manera significativa sobre los coeficientes de las regresiones y por lo tanto, no deben ser eliminados.
+Según la distancia de Cook ninguno de los outliers observados, tanto en el año 2010 como en el año 2018, impacta de manera significativa sobre los coeficientes de las regresiones y por lo tanto, no deben ser eliminados.
 
 # Comparación con rlm
 
